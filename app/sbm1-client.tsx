@@ -2,7 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, extend, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Billboard,
   Image,
@@ -10,10 +10,7 @@ import {
   useGLTF,
   useScroll,
 } from "@react-three/drei";
-import { easing, geometry } from "maath";
-
-// enable rounded-rect geometry helpers from maath
-extend(geometry);
+import { easing } from "maath";
 
 // 메인에서 바로 쓰는 sbm1 클라이언트 컴포넌트
 export default function Sbm1Client() {
@@ -351,5 +348,6 @@ function ActiveCard({
     </Billboard>
   );
 }
+
 
 
