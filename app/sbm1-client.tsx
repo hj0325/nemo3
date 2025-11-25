@@ -1,7 +1,6 @@
- "use client";
+"use client";
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas, extend, useFrame } from "@react-three/fiber";
 import {
@@ -16,49 +15,13 @@ import { easing, geometry } from "maath";
 // enable rounded-rect geometry helpers from maath
 extend(geometry);
 
-// Because three/fiber only run on the client, wrap page content in a dynamic component with ssr disabled.
-const Sbm1Content = dynamic(
-  () =>
-    Promise.resolve(function Sbm1ContentInner({ onSelectImage }) {
-      return (
-        <Canvas
-          dpr={[1, 1.5]}
-          style={{
-            width: "100vw",
-            height: "100vh",
-            background: "#000000",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {/* Global lighting for cards + center tree (고정 값) */}
-          <ambientLight intensity={1.0} />
-          <directionalLight
-            position={[-5.0, 24.5, 12.0]}
-            intensity={3.2}
-            color="#ffffff"
-          />
-          <directionalLight
-            position={[-3.5, 21.5, -14.0]}
-            intensity={4.2}
-            color="#8fa1de"
-          />
-
-          <ScrollControls pages={4} infinite>
-            <Scene position={[0, 1.5, 0]} onSelectImage={onSelectImage} />
-          </ScrollControls>
-        </Canvas>
-      );
-    }),
-  { ssr: false }
-);
-
-export default function Sbm1Page() {
-  const [bgUrl, setBgUrl] = useState(null);
+// 메인에서 바로 쓰는 sbm1 클라이언트 컴포넌트
+export default function Sbm1Client() {
+  const [bgUrl, setBgUrl] = useState<string | null>(null);
   const [bgVisible, setBgVisible] = useState(false);
-  const fadeRef = useRef(null);
+  const fadeRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSelectImage = (url) => {
+  const handleSelectImage = (url: string | null) => {
     if (!url) return;
     setBgUrl(url);
     setBgVisible(true);
@@ -97,15 +60,48 @@ export default function Sbm1Page() {
       )}
 
       {/* 메인 3D 씬 */}
-      <Sbm1Content onSelectImage={handleSelectImage} />
+      <Canvas
+        dpr={[1, 1.5]}
+        style={{
+          width: "100vw",
+          height: "100vh",
+          background: "#000000",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* Global lighting for cards + center tree (고정 값) */}
+        <ambientLight intensity={1.0} />
+        <directionalLight
+          position={[-5.0, 24.5, 12.0]}
+          intensity={3.2}
+          color="#ffffff"
+        />
+        <directionalLight
+          position={[-3.5, 21.5, -14.0]}
+          intensity={4.2}
+          color="#8fa1de"
+        />
+
+        <ScrollControls pages={4} infinite>
+          <Scene position={[0, 1.5, 0]} onSelectImage={handleSelectImage} />
+        </ScrollControls>
+      </Canvas>
     </div>
   );
 }
 
-function Scene({ children, onSelectImage, ...props }) {
-  const ref = useRef();
+function Scene({
+  children,
+  onSelectImage,
+  ...props
+}: {
+  children?: React.ReactNode;
+  onSelectImage?: (url: string | null) => void;
+}) {
+  const ref = useRef<THREE.Group>(null);
   const scroll = useScroll();
-  const [hovered, hover] = useState(0);
+  const [hovered, hover] = useState<number | null>(0);
 
   // 4초마다 자동으로 다음 이미지 선택
   useEffect(() => {
@@ -114,7 +110,7 @@ function Scene({ children, onSelectImage, ...props }) {
     }
     const id = setInterval(() => {
       hover((prev) => {
-        const next = (prev + 1) % IMAGE_COUNT;
+        const next = ((prev ?? 0) + 1) % IMAGE_COUNT;
         if (onSelectImage) {
           onSelectImage(getImageUrl(next));
         }
@@ -143,7 +139,7 @@ function Scene({ children, onSelectImage, ...props }) {
   });
 
   return (
-    <group ref={ref} {...props}>
+    <group ref={ref} {...(props as any)}>
       {/* 중앙 3D 나무 모델 */}
       <CenterTree hovered={hovered} />
       <Cards
@@ -185,7 +181,7 @@ function Scene({ children, onSelectImage, ...props }) {
   );
 }
 
-function CenterTree({ hovered, ...props }) {
+function CenterTree({ hovered, ...props }: { hovered: number | null }) {
   // public/sbm1 아래 GLB 로드
   const { scene } = useGLTF(
     "/sbm1/a_tall_narrow_three__1110145554_texture.glb"
@@ -193,7 +189,7 @@ function CenterTree({ hovered, ...props }) {
   // 선택된 이미지(hovered)가 있을 때 살짝 투명하게
   useEffect(() => {
     if (!scene) return;
-    scene.traverse((obj) => {
+    scene.traverse((obj: any) => {
       if (obj && obj.isMesh && obj.material) {
         const mat = obj.material;
         mat.transparent = true;
@@ -207,7 +203,7 @@ function CenterTree({ hovered, ...props }) {
       // 살짝 카메라 쪽(+z)으로 빼서 배경 이미지/카드에 안 잘리도록
       position={[0, 0, 0.4]}
       scale={[2.8, 2.8, 2.8]}
-      {...props}
+      {...(props as any)}
     />
   );
 }
@@ -217,8 +213,8 @@ useGLTF.preload("/sbm1/a_tall_narrow_three__1110145554_texture.glb");
 
 // 이미지 풀: public/sbm1 안에 있는 시간대별 이미지를 모두 순회해서 사용
 const sbm1Images = (() => {
-  const result = [];
-  const addGroup = (prefix, count) => {
+  const result: string[] = [];
+  const addGroup = (prefix: string, count: number) => {
     for (let i = 1; i <= count; i++) {
       result.push(`/sbm1/${prefix}${i}.png`);
     }
@@ -233,7 +229,7 @@ const sbm1Images = (() => {
 
 const imagePool = sbm1Images;
 
-function getImageUrl(i) {
+function getImageUrl(i: number) {
   return imagePool[i % imagePool.length];
 }
 
@@ -247,18 +243,27 @@ function Cards({
   onPointerOut,
   onSelectImage,
   ...props
+}: {
+  from?: number;
+  len?: number;
+  radius?: number;
+  onPointerOver: (index: number | null) => void;
+  onPointerOut: (index: number | null) => void;
+  onSelectImage?: (url: string | null) => void;
 }) {
-  const [hovered, hover] = useState(null);
+  const [hovered, hover] = useState<number | null>(null);
   const amount = Math.round(len * 22);
 
   return (
-    <group {...props}>
+    <group {...(props as any)}>
       {Array.from({ length: amount - 3 }, (_, i) => {
         const angle = from + (i / amount) * len;
         return (
           <Card
             key={angle}
-            onPointerOver={(e) => (e.stopPropagation(), hover(i), onPointerOver(i))}
+            onPointerOver={(e: any) => (
+              e.stopPropagation(), hover(i), onPointerOver(i)
+            )}
             onPointerOut={() => (hover(null), onPointerOut(null))}
             position={[Math.sin(angle) * radius, 0, Math.cos(angle) * radius]}
             rotation={[0, Math.PI / 2 + angle, 0]}
@@ -273,8 +278,19 @@ function Cards({
   );
 }
 
-function Card({ url, active, hovered, onSelectImage, ...props }) {
-  const ref = useRef();
+function Card({
+  url,
+  active,
+  hovered,
+  onSelectImage,
+  ...props
+}: {
+  url: string;
+  active: boolean;
+  hovered: boolean;
+  onSelectImage?: (url: string | null) => void;
+}) {
+  const ref = useRef<any>(null);
 
   useFrame((state, delta) => {
     if (!ref.current) return;
@@ -285,7 +301,7 @@ function Card({ url, active, hovered, onSelectImage, ...props }) {
 
   return (
     <group
-      {...props}
+      {...(props as any)}
       onClick={() => {
         if (onSelectImage) onSelectImage(url);
       }}
@@ -302,8 +318,13 @@ function Card({ url, active, hovered, onSelectImage, ...props }) {
   );
 }
 
-function ActiveCard({ hovered, ...props }) {
-  const ref = useRef();
+function ActiveCard({
+  hovered,
+  ...props
+}: {
+  hovered: number | null;
+}) {
+  const ref = useRef<any>(null);
 
   useLayoutEffect(() => {
     if (ref.current && ref.current.material) {
@@ -318,7 +339,7 @@ function ActiveCard({ hovered, ...props }) {
   });
 
   return (
-    <Billboard {...props}>
+    <Billboard {...(props as any)}>
       <Image
         ref={ref}
         transparent
