@@ -88,14 +88,8 @@ export default function Sbm1Client() {
   );
 }
 
-function Scene({
-  children,
-  onSelectImage,
-  ...props
-}: {
-  children?: React.ReactNode;
-  onSelectImage?: (url: string | null) => void;
-}) {
+function Scene(props: any) {
+  const { children, onSelectImage, ...rest } = props;
   const ref = useRef<THREE.Group>(null);
   const scroll = useScroll();
   const [hovered, hover] = useState<number | null>(0);
@@ -136,7 +130,7 @@ function Scene({
   });
 
   return (
-    <group ref={ref} {...(props as any)}>
+    <group ref={ref} {...(rest as any)}>
       {/* 중앙 3D 나무 모델 */}
       <CenterTree hovered={hovered} />
       <Cards
