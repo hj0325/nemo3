@@ -226,27 +226,21 @@ function getImageUrl(i: number) {
 
 const IMAGE_COUNT = imagePool.length;
 
-function Cards({
-  from = 0,
-  len = Math.PI * 2,
-  radius = 6.3,
-  onPointerOver,
-  onPointerOut,
-  onSelectImage,
-  ...props
-}: {
-  from?: number;
-  len?: number;
-  radius?: number;
-  onPointerOver: (index: number | null) => void;
-  onPointerOut: (index: number | null) => void;
-  onSelectImage?: (url: string | null) => void;
-}) {
+function Cards(props: any) {
+  const {
+    from = 0,
+    len = Math.PI * 2,
+    radius = 6.3,
+    onPointerOver,
+    onPointerOut,
+    onSelectImage,
+    ...rest
+  } = props;
   const [hovered, hover] = useState<number | null>(null);
   const amount = Math.round(len * 22);
 
   return (
-    <group {...(props as any)}>
+    <group {...(rest as any)}>
       {Array.from({ length: amount - 3 }, (_, i) => {
         const angle = from + (i / amount) * len;
         return (
